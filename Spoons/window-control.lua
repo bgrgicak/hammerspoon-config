@@ -1,52 +1,57 @@
+local log = require 'log'
 
 local resizeKeybindings = {
-   { 'h', 'half', {'ctrl', 'alt'} },
-   { '1', 'half', {'ctrl', 'alt'} },
-   { '2', 'forth', {'ctrl', 'alt'} },
-   { '3', 'three_forth', {'ctrl', 'alt'} },
-   { '4', 'third', {'ctrl', 'alt'} },
-   { '5', 'two_third', {'ctrl', 'alt'} },
-   { 'h', 'half', {'ctrl', 'alt', 'shift'} },
-   { '1', 'half', {'ctrl', 'alt', 'shift'}  },
-   { '2', 'forth', {'ctrl', 'alt', 'shift'}  },
-   { '3', 'three_forth', {'ctrl', 'alt', 'shift'}  },
-   { '4', 'third', {'ctrl', 'alt', 'shift'}  },
-   { '5', 'two_third', {'ctrl', 'alt', 'shift'}  }
+   { 'h', 'five', {'ctrl', 'alt'} },
+   { '1', 'one', {'ctrl', 'alt'} },
+   { '2', 'two', {'ctrl', 'alt'} },
+   { '3', 'three', {'ctrl', 'alt'} },
+   { '4', 'four', {'ctrl', 'alt'} },
+   { '5', 'five', {'ctrl', 'alt'} },
+   { 'h', 'five', {'ctrl', 'alt', 'shift'} },
+   { '1', 'one', {'ctrl', 'alt', 'shift'} },
+   { '2', 'two', {'ctrl', 'alt', 'shift'} },
+   { '3', 'three', {'ctrl', 'alt', 'shift'} },
+   { '4', 'four', {'ctrl', 'alt', 'shift'} },
+   { '5', 'five', {'ctrl', 'alt', 'shift'} },
+}
+
+local moveKeybindings = {
+   { 'left', {'ctrl', 'alt'} },
+   { 'right', {'ctrl', 'alt'} },
+   { 'up', {'ctrl', 'alt'} },
+   { 'down', {'ctrl', 'alt'} },
+   { 'left', {'ctrl', 'alt', 'shift'} },
+   { 'right', {'ctrl', 'alt', 'shift'} },
 }
 
 local sizes = {
-   forth       = 0.25,
-   third       = 0.3333333334,
-   half        = 0.50,
-   two_third   = 0.6666666666,
-   three_forth = 0.75,
-   full        = 1.00
+   one   = 0.1,
+   two   = 0.2,
+   three = 0.3,
+   four  = 0.4,
+   five  = 0.5
 }
 
-local sizeKeys = {}
-for key, value in pairs(sizes) do
-   table.insert( sizeKeys, key )
-end
-
 local positions = {
-   top    = { nil, 0.00 },
-   bottom = { nil, 1.00 },
+   up    = { nil, 0.00 },
+   down = { nil, 1.00 },
    left   = { 0.00, nil },
    right  = { 1.00, nil },
 }
 
+local arrowSizes = { 'one', 'two', 'three', 'four', 'five' }
 
 --- Helper ---
 
 local function round(x, places)
-   local places = places or 0
+   local places = places or 1
    local x = x * 10^places
    return (x + 0.5 - (x + 0.5) % 1) / 10^places
 end
 local function currentWindowRect( win )
-   local places = 10
+   local places = 3
    local ur, r = win:screen():toUnitRect(win:frame()), round
-   return {r(ur.x,places), r(ur.y,places), r(ur.w,places), r(ur.h,places)} -- an hs.geometry.unitrect table
+   return {ur.x, ur.y, ur.w, ur.h} -- an hs.geometry.unitrect table
 end
 
 local function filterRectSize( rect, index )
@@ -81,38 +86,49 @@ local function resizeCurrentWindow( size, vertical_half )
       moveToRect[2] = filterRectSize(moveToRect, 2)
    end
 
+   log.write( moveToRect[3] )
    win:move( moveToRect )
+   log.write( currentWindowRect(win)[3] )
 end
 
-local function filterRectPosition( rect, index, position )
+local function filterRectPosition( rect, index, position, center )
+   local x = rect[index]
    if nil ~= position[index] then
-      if 1.00 == position[index] then
-         return 1.00 - rect[index + 2]
+      if center then
+         if 1.00 == position[index] then
+            x = 0.50
+         else
+            x = 0.50 - rect[index + 2]
+         end
       else
-        return 0.00
+         if 1.00 == position[index] then
+            x = 1.00 - rect[index + 2]
+         else
+            x = 0.00
+         end
       end
    end
-   return rect[index]
+   return round( x )
 end
 
 local function getNextSize( width )
-   local index = 1
-   for key, size in pairs(sizes) do
-      if width == size then
-         if sizeKeys[ index + 1 ] then 
-            return sizeKeys[ index + 1 ] 
+   for index, size in pairs(arrowSizes) do
+      if width == sizes[ size ] then
+         if arrowSizes[ index + 1 ] then 
+            return arrowSizes[ index + 1 ] 
          else
-            return sizeKeys[ 1 ] 
+            return arrowSizes[ 1 ]
          end
-      elseif width < size then
-         return key
       end
-      index = index + s1
    end
-   ---return 'half'
+   return arrowSizes[1]
 end
 
-local function moveCurrentWindow( position )
+local function do_tables_match( a, b )
+   return table.concat(a) == table.concat(b)
+end
+
+local function moveCurrentWindow( position, center )
    local win = hs.window.focusedWindow()
    if not win then return end
 
@@ -121,21 +137,24 @@ local function moveCurrentWindow( position )
    if not positions[position] then return end
 
    local position = positions[position]
-   local moveToRect = winRect
 
-   moveToRect[1] = filterRectPosition( moveToRect, 1, position )
-   moveToRect[2] = filterRectPosition( moveToRect, 2, position )
+   local x = winRect[1]
+   local y = winRect[2]
+   winRect[1] = filterRectPosition( winRect, 1, position, center )
+   winRect[2] = filterRectPosition( winRect, 2, position, center )
 
-   -- if nil ~= position[1] and winRect[1] == moveToRect[1] then
-   --    local nextSize = getNextSize( winRect[3] )
-   --    hs.alert.show(nextSize)
-   --    resizeCurrentWindow( nextSize )
-   -- end
-   -- if nil ~= position[2] and winRect[2] == moveToRect[2] then
-   --    hs.alert.show('resize v')
-   -- end
-
-   win:move( moveToRect )
+   if nil ~= position[1] and x == winRect[1] then
+      local nextSize = getNextSize( round( winRect[3] ) )
+      if nextSize then
+         winRect[3] = sizes[nextSize]
+         winRect[1] = filterRectPosition( winRect, 1, position, center )
+      end
+   elseif nil ~= position[2] and y == winRect[2] then
+      hs.alert.show('resize v')
+   else
+   end
+   
+   win:move( winRect )
 end
 
 local function fullCurrentWindow()
@@ -168,20 +187,11 @@ for index, keybinding in pairs(resizeKeybindings) do
    end)
 end
 
-
-hs.hotkey.bind({'ctrl', 'alt'}, 'left', function()
-   moveCurrentWindow( 'left' )
-end)
-hs.hotkey.bind({'ctrl', 'alt'}, 'right', function()
-   moveCurrentWindow( 'right' )
-end)
-hs.hotkey.bind({'ctrl', 'alt'}, 'up', function()
-   moveCurrentWindow( 'top' )
-end)
-hs.hotkey.bind({'ctrl', 'alt'}, 'down', function()
-   moveCurrentWindow( 'bottom' )
-end)
-
+for index, keybinding in pairs(moveKeybindings) do   
+   hs.hotkey.bind( keybinding[2], keybinding[1], function()
+      moveCurrentWindow( keybinding[1], 'shift' == keybinding[2][3] )
+   end)
+end
 
 
 hs.hotkey.bind({'ctrl', 'alt'}, 'f', fullCurrentWindow)
