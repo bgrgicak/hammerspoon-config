@@ -1,5 +1,3 @@
-local log = require 'log'
-
 local resizeKeybindings = {
    { 'h', 'five', {'ctrl', 'alt'} },
    { '1', 'one', {'ctrl', 'alt'} },
@@ -86,9 +84,7 @@ local function resizeCurrentWindow( size, vertical_half )
       moveToRect[2] = filterRectSize(moveToRect, 2)
    end
 
-   log.write( moveToRect[3] )
    win:move( moveToRect )
-   log.write( currentWindowRect(win)[3] )
 end
 
 local function filterRectPosition( rect, index, position, center )
@@ -150,20 +146,31 @@ local function moveCurrentWindow( position, center )
          winRect[1] = filterRectPosition( winRect, 1, position, center )
       end
    elseif nil ~= position[2] and y == winRect[2] then
-      hs.alert.show('resize v')
-   else
+      if 1 == winRect[4] then
+         winRect[4] = 0.5
+         if 0 == position[2] then -- up
+            winRect[2] = 0
+         else
+            winRect[2] = 0.5
+         end
+      else -- if not full set full
+         winRect[2] = 0
+         winRect[4] = 1
+      end
    end
    
    win:move( winRect )
 end
 
-local function fullCurrentWindow()
+local function fullHeightCurrentWindow()
    local win = hs.window.focusedWindow()
    if not win then return end
 
    local winRect = currentWindowRect(win)
+   winRect[2] = 0
+   winRect[4] = 1
 
-   win:move( { 0, 0, 1, 1 } )
+   win:move( winRect )
 end
 
 local function centerCurrentWindow()
@@ -194,5 +201,5 @@ for index, keybinding in pairs(moveKeybindings) do
 end
 
 
-hs.hotkey.bind({'ctrl', 'alt'}, 'f', fullCurrentWindow)
+hs.hotkey.bind({'ctrl', 'alt'}, 'f', fullHeightCurrentWindow)
 hs.hotkey.bind({'ctrl', 'alt'}, 'c', centerCurrentWindow)
