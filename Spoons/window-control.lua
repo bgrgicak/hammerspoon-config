@@ -23,11 +23,11 @@ local moveKeybindings = {
 }
 
 local sizes = {
-   one   = 0.1,
-   two   = 0.2,
-   three = 0.3,
-   four  = 0.4,
-   five  = 0.5
+   one   = 0.10,
+   two   = 0.20,
+   three = 0.30,
+   four  = 0.40,
+   five  = 0.50
 }
 
 local positions = {
@@ -42,14 +42,13 @@ local arrowSizes = { 'one', 'two', 'three', 'four', 'five' }
 --- Helper ---
 
 local function round(x, places)
-   local places = places or 1
+   local places = places or 2
    local x = x * 10^places
    return (x + 0.5 - (x + 0.5) % 1) / 10^places
 end
 local function currentWindowRect( win )
-   local places = 3
    local ur, r = win:screen():toUnitRect(win:frame()), round
-   return {ur.x, ur.y, ur.w, ur.h} -- an hs.geometry.unitrect table
+   return {r(ur.x), r(ur.y), r(ur.w), r(ur.h)} -- an hs.geometry.unitrect table
 end
 
 local function filterRectSize( rect, index )
@@ -85,6 +84,7 @@ local function resizeCurrentWindow( size, vertical_half )
    end
 
    win:move( moveToRect )
+   
 end
 
 local function filterRectPosition( rect, index, position, center )
@@ -109,9 +109,10 @@ end
 
 local function getNextSize( width )
    for index, size in pairs(arrowSizes) do
-      if width == sizes[ size ] then
-         if arrowSizes[ index + 1 ] then 
-            return arrowSizes[ index + 1 ] 
+      nextSize = arrowSizes[ index + 1 ]
+      if width >= sizes[ size ] and ( nil == nextSize or width < sizes[ nextSize ] )  then
+         if nextSize then 
+            return nextSize
          else
             return arrowSizes[ 1 ]
          end
