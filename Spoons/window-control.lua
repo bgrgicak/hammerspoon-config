@@ -71,18 +71,18 @@ local function resizeCurrentWindow( size, vertical_half )
 
    local moveToRect = {
       winRect[1],
-      winRect[2],
+      0.00,
       sizes[size],
       1.00
    }
 
    moveToRect[1] = filterRectSize(moveToRect, 1)
-
    if ( vertical_half ) then
       moveToRect[4] = 0.5
       moveToRect[2] = filterRectSize(moveToRect, 2)
    end
 
+   log.write( moveToRect[1] ..' ' .. moveToRect[2] ..' ' .. moveToRect[3] ..' ' .. moveToRect[4] )
    win:move( moveToRect )
    
 end
