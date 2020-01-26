@@ -5,12 +5,20 @@ local resizeKeybindings = {
    { '3', 'three', {'ctrl', 'alt'} },
    { '4', 'four', {'ctrl', 'alt'} },
    { '5', 'five', {'ctrl', 'alt'} },
+   { '6', 'onePtFive', {'ctrl', 'alt'} },
+   { '7', 'twoPtFive', {'ctrl', 'alt'} },
+   { '8', 'threePtFive', {'ctrl', 'alt'} },
+   { '9', 'fourPtFive', {'ctrl', 'alt'} },
    { 'h', 'five', {'ctrl', 'alt', 'shift'} },
    { '1', 'one', {'ctrl', 'alt', 'shift'} },
    { '2', 'two', {'ctrl', 'alt', 'shift'} },
    { '3', 'three', {'ctrl', 'alt', 'shift'} },
    { '4', 'four', {'ctrl', 'alt', 'shift'} },
    { '5', 'five', {'ctrl', 'alt', 'shift'} },
+   { '6', 'onePtFive', {'ctrl', 'alt', 'shift'} },
+   { '7', 'twoPtFive', {'ctrl', 'alt', 'shift'} },
+   { '8', 'threePtFive', {'ctrl', 'alt', 'shift'} },
+   { '9', 'fourPtFive', {'ctrl', 'alt', 'shift'} },
 }
 
 local moveKeybindings = {
@@ -27,7 +35,11 @@ local sizes = {
    two   = 0.20,
    three = 0.30,
    four  = 0.40,
-   five  = 0.50
+   five  = 0.50,
+   onePtFive   = 0.15,
+   twoPtFive   = 0.25,
+   threePtFive = 0.35,
+   fourPtFive  = 0.45
 }
 
 local positions = {
